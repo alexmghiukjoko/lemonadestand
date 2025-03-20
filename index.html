@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Limonadenstand Verwaltungssystem - Einfache Verwaltung Ihres Limonadenstands">
     <title>Limonadenstand Verwaltung</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
             <a class="navbar-brand" href="#">Limonadenstand</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -17,244 +26,166 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="kasse-tab">Kasse</a>
+                        <a class="nav-link" href="#" onclick="showSection('kasse')">Kasse</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="produkte-tab">Produkte</a>
+                        <a class="nav-link" href="#" onclick="showSection('produkte')">Produkte</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="rezepte-tab">Rezepte</a>
+                        <a class="nav-link" href="#" onclick="showSection('rezepte')">Rezepte</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="tagesabschluss-tab">Tagesabschluss</a>
+                        <a class="nav-link" href="#" onclick="showSection('verkauf')">Verkauf</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <!-- Main Content -->
+    <main class="container mt-4">
         <!-- Kasse Section -->
-        <div id="kasse-section" class="section active">
-            <h2>Kasse</h2>
+        <section id="kasse" class="section">
             <div class="row">
                 <div class="col-md-8">
                     <div class="card">
+                        <div class="card-header">
+                            <h2>Produkte</h2>
+                        </div>
                         <div class="card-body">
-                            <div id="cart-items"></div>
-                            <div class="mt-3">
-                                <h4>Gesamtbetrag: <span id="total-amount">0.00</span> €</h4>
-                                <button class="btn btn-success" onclick="checkout()">Bezahlen</button>
-                            </div>
+                            <div id="product-list" class="product-grid"></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card">
+                        <div class="card-header">
+                            <h2>Warenkorb</h2>
+                        </div>
                         <div class="card-body">
-                            <h5>Produkte</h5>
-                            <div id="product-buttons"></div>
+                            <div id="cart-items" class="cart-items"></div>
+                            <div class="cart-total">
+                                <h3>Gesamt: <span id="total-amount">0.00€</span></h3>
+                                <button class="btn btn-primary w-100" onclick="checkout()">Bezahlen</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Produkte Section -->
-        <div id="produkte-section" class="section">
-            <h2>Produkte verwalten</h2>
+        <section id="produkte" class="section" style="display: none;">
             <div class="card">
+                <div class="card-header">
+                    <h2>Produktverwaltung</h2>
+                </div>
                 <div class="card-body">
-                    <form id="product-form">
-                        <div class="mb-3">
-                            <label class="form-label">Produktname</label>
-                            <input type="text" class="form-control" id="product-name" required>
+                    <form id="product-form" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <input type="text" class="form-control" id="product-name" placeholder="Produktname" required>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="number" class="form-control" id="product-price" placeholder="Preis" step="0.01" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Hinzufügen</button>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Preis (€)</label>
-                            <input type="number" step="0.01" class="form-control" id="product-price" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Produkt hinzufügen</button>
                     </form>
-                    <div class="mt-4">
-                        <h5>Produktliste</h5>
-                        <div id="products-list"></div>
-                    </div>
+                    <div id="product-list-admin" class="product-grid"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Rezepte Section -->
-        <div id="rezepte-section" class="section">
-            <h2>Rezepte verwalten</h2>
+        <section id="rezepte" class="section" style="display: none;">
             <div class="card">
+                <div class="card-header">
+                    <h2>Rezeptverwaltung</h2>
+                </div>
                 <div class="card-body">
-                    <form id="recipe-form">
+                    <form id="recipe-form" class="mb-4">
                         <div class="mb-3">
-                            <label class="form-label">Rezeptname</label>
-                            <input type="text" class="form-control" id="recipe-name" required>
+                            <input type="text" class="form-control" id="recipe-name" placeholder="Rezeptname" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Kategorie</label>
-                            <select class="form-control" id="recipe-category" required>
-                                <option value="klassisch">Klassisch</option>
-                                <option value="fruchtig">Fruchtig</option>
-                                <option value="spezial">Spezial</option>
-                                <option value="alkoholfrei">Alkoholfrei</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Zubereitungszeit (Minuten)</label>
-                            <input type="number" class="form-control" id="recipe-time" required min="1">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Zutaten</label>
+                            <h4>Zutaten</h4>
                             <div id="ingredients-list"></div>
-                            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addIngredientField()">+ Zutat hinzufügen</button>
+                            <button type="button" class="btn btn-secondary" onclick="addIngredientField()">Zutat hinzufügen</button>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Anleitung</label>
-                            <textarea class="form-control" id="recipe-instructions" required rows="4"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Produkt verknüpfen</label>
-                            <select class="form-control" id="recipe-product">
-                                <option value="">Kein Produkt verknüpfen</option>
-                            </select>
+                            <textarea class="form-control" id="recipe-instructions" placeholder="Zubereitungsanleitung" rows="3" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary">Rezept speichern</button>
                     </form>
-                    <div class="mt-4">
-                        <h5>Rezeptliste</h5>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="recipe-search" placeholder="Rezept suchen...">
-                        </div>
-                        <div id="recipes-list"></div>
-                    </div>
+                    <div id="recipe-list" class="recipe-grid"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Tagesabschluss Section -->
-        <div id="tagesabschluss-section" class="section">
-            <h2>Tagesabschluss</h2>
+        <!-- Verkauf Section -->
+        <section id="verkauf" class="section" style="display: none;">
             <div class="card">
+                <div class="card-header">
+                    <h2>Verkaufsübersicht</h2>
+                </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <h5>Tagesumsatz</h5>
-                            <p>Gesamtumsatz: <span id="daily-total">0.00</span> €</p>
-                            <p>Anzahl Verkäufe: <span id="daily-sales">0</span></p>
+                            <h3>Tagesumsatz</h3>
+                            <div id="daily-summary"></div>
                         </div>
                         <div class="col-md-6">
-                            <button class="btn btn-primary" onclick="generatePDF()">PDF Bericht erstellen</button>
-                            <button class="btn btn-success" onclick="generateReceipt()">Beleg drucken</button>
+                            <button class="btn btn-primary" onclick="generatePDF()">PDF erstellen</button>
+                            <button class="btn btn-secondary" onclick="exportData()">Daten exportieren</button>
+                            <button class="btn btn-secondary" onclick="importData()">Daten importieren</button>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <h5>Verkaufsverlauf</h5>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Datum</th>
-                                        <th>Uhrzeit</th>
-                                        <th>Produkte</th>
-                                        <th>Gesamtbetrag</th>
-                                        <th>Aktionen</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="sales-history"></tbody>
-                            </table>
+                    <div id="sales-history" class="sales-history"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Zahlung</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closePaymentModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Zu zahlender Betrag</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" class="form-control" id="paymentAmount" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rückgeld</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="text" class="form-control" id="changeAmount" readonly>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Receipt Modal -->
-        <div class="modal fade" id="receiptModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Beleg</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="receipt-content">
-                            <div class="text-center mb-3">
-                                <h4>Limonadenstand</h4>
-                                <p class="mb-1">Beleg Nr: <span id="receipt-number"></span></p>
-                                <p class="mb-1">Datum: <span id="receipt-date"></span></p>
-                                <p class="mb-1">Uhrzeit: <span id="receipt-time"></span></p>
-                            </div>
-                            <hr>
-                            <div id="receipt-items"></div>
-                            <hr>
-                            <div class="d-flex justify-content-between">
-                                <strong>Gesamtbetrag:</strong>
-                                <strong><span id="receipt-total"></span> €</strong>
-                            </div>
-                            <div class="text-center mt-4">
-                                <p>Vielen Dank für Ihren Einkauf!</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                        <button type="button" class="btn btn-primary" onclick="printReceipt()">Drucken</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Modal -->
-        <div class="modal fade" id="paymentModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Zahlung</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="payment-info">
-                            <div class="d-flex justify-content-between mb-3">
-                                <h6>Zu zahlender Betrag:</h6>
-                                <h6 id="payment-amount">0.00 €</h6>
-                            </div>
-                            <div class="mb-3">
-                                <label for="payment-input" class="form-label">Gegebener Betrag:</label>
-                                <div class="input-group">
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="payment-input" 
-                                           step="0.01" 
-                                           min="0" 
-                                           onchange="calculateChange()"
-                                           onkeyup="calculateChange()"
-                                           autofocus>
-                                    <span class="input-group-text">€</span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <h6>Rückgeld:</h6>
-                                <h6 id="change-amount" class="text-success">0.00 €</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" id="confirm-payment" onclick="confirmPayment()" disabled>
-                            Zahlung bestätigen
-                        </button>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="confirmPaymentBtn" onclick="confirmPayment()" disabled>Zahlung bestätigen</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <!-- Custom JavaScript -->
     <script src="script.js"></script>
 </body>
 </html> 

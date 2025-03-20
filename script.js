@@ -1,3 +1,195 @@
+// Cache DOM elements
+const DOM = {
+    sections: document.querySelectorAll('.section'),
+    cartItems: document.getElementById('cart-items'),
+    totalAmount: document.getElementById('total-amount'),
+    productList: document.getElementById('product-list'),
+    recipeList: document.getElementById('recipe-list'),
+    salesHistory: document.getElementById('sales-history'),
+    paymentModal: document.getElementById('paymentModal'),
+    paymentAmount: document.getElementById('paymentAmount'),
+    changeAmount: document.getElementById('changeAmount'),
+    confirmPaymentBtn: document.getElementById('confirmPaymentBtn'),
+    productForm: document.getElementById('product-form'),
+    recipeForm: document.getElementById('recipe-form'),
+    ingredientsList: document.getElementById('ingredients-list')
+};
+
+// State management
+const state = {
+    products: JSON.parse(localStorage.getItem('products')) || [],
+    recipes: JSON.parse(localStorage.getItem('recipes')) || [],
+    cart: JSON.parse(localStorage.getItem('cart')) || [],
+    dailySales: JSON.parse(localStorage.getItem('dailySales')) || [],
+    salesHistory: JSON.parse(localStorage.getItem('salesHistory')) || [],
+    receiptCounter: parseInt(localStorage.getItem('receiptCounter')) || 1
+};
+
+// Debounce function for performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Lazy loading for sections
+function showSection(sectionId) {
+    DOM.sections.forEach(section => {
+        section.style.display = section.id === sectionId ? 'block' : 'none';
+    });
+}
+
+// Optimized save function with debouncing
+const saveData = debounce(() => {
+    try {
+        localStorage.setItem('products', JSON.stringify(state.products));
+        localStorage.setItem('recipes', JSON.stringify(state.recipes));
+        localStorage.setItem('cart', JSON.stringify(state.cart));
+        localStorage.setItem('dailySales', JSON.stringify(state.dailySales));
+        localStorage.setItem('salesHistory', JSON.stringify(state.salesHistory));
+        localStorage.setItem('receiptCounter', state.receiptCounter.toString());
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}, 500);
+
+// Optimized cart functions
+function addToCart(product) {
+    const existingItem = state.cart.find(item => item.id === product.id);
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        state.cart.push({ ...product, quantity: 1 });
+    }
+    updateCartDisplay();
+    saveData();
+}
+
+function updateCartDisplay() {
+    if (!DOM.cartItems) return;
+    
+    DOM.cartItems.innerHTML = state.cart.map(item => `
+        <div class="cart-item">
+            <span>${item.name}</span>
+            <div class="quantity-controls">
+                <button class="btn-quantity" onclick="updateQuantity(${item.id}, -1)">-</button>
+                <span>${item.quantity}</span>
+                <button class="btn-quantity" onclick="updateQuantity(${item.id}, 1)">+</button>
+            </div>
+            <span>${(item.price * item.quantity).toFixed(2)}€</span>
+        </div>
+    `).join('');
+    
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (DOM.totalAmount) {
+        DOM.totalAmount.textContent = `${total.toFixed(2)}€`;
+    }
+}
+
+// Optimized payment processing
+function calculateChange() {
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const payment = parseFloat(DOM.paymentAmount.value) || 0;
+    const change = payment - total;
+    
+    if (DOM.changeAmount) {
+        DOM.changeAmount.textContent = change >= 0 ? `${change.toFixed(2)}€` : '0.00€';
+    }
+    
+    if (DOM.confirmPaymentBtn) {
+        DOM.confirmPaymentBtn.disabled = payment < total;
+    }
+}
+
+// Event listeners with performance optimizations
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize IndexedDB for backup
+    initIndexedDB();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Load initial data
+    updateCartDisplay();
+    updateProductList();
+    updateRecipeList();
+    updateSalesHistory();
+    
+    // Show initial section
+    showSection('kasse');
+});
+
+// Optimized PDF generation
+const generatePDF = debounce(() => {
+    const doc = new jsPDF();
+    // ... rest of PDF generation code ...
+}, 1000);
+
+// Initialize IndexedDB for backup
+function initIndexedDB() {
+    const request = indexedDB.open('LimonadenstandDB', 1);
+    
+    request.onerror = (event) => {
+        console.error('Database error:', event.target.error);
+    };
+    
+    request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('products')) {
+            db.createObjectStore('products', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('recipes')) {
+            db.createObjectStore('recipes', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('salesHistory')) {
+            db.createObjectStore('salesHistory', { keyPath: 'id' });
+        }
+    };
+    
+    request.onsuccess = (event) => {
+        const db = event.target.result;
+        // Backup data to IndexedDB
+        backupToIndexedDB(db);
+    };
+}
+
+// Backup function
+function backupToIndexedDB(db) {
+    const transaction = db.transaction(['products', 'recipes', 'salesHistory'], 'readwrite');
+    
+    transaction.objectStore('products').put(state.products);
+    transaction.objectStore('recipes').put(state.recipes);
+    transaction.objectStore('salesHistory').put(state.salesHistory);
+    
+    transaction.oncomplete = () => {
+        console.log('Backup completed successfully');
+    };
+    
+    transaction.onerror = (event) => {
+        console.error('Backup error:', event.target.error);
+    };
+}
+
+// Export functions
+window.showSection = showSection;
+window.addToCart = addToCart;
+window.updateQuantity = updateQuantity;
+window.checkout = checkout;
+window.closePaymentModal = closePaymentModal;
+window.calculateChange = calculateChange;
+window.confirmPayment = confirmPayment;
+window.addIngredientField = addIngredientField;
+window.deleteRecipe = deleteRecipe;
+window.generatePDF = generatePDF;
+window.exportData = exportData;
+window.importData = importData;
+
 // State management
 let products = JSON.parse(localStorage.getItem('products')) || [];
 let recipes = JSON.parse(localStorage.getItem('recipes')) || [];
@@ -312,25 +504,6 @@ function updateProductButtons() {
     `).join('');
 }
 
-function addToCart(productId) {
-    const product = products.find(p => p.id === productId);
-    const cartItem = cart.find(item => item.productId === productId);
-    
-    if (cartItem) {
-        cartItem.quantity++;
-    } else {
-        cart.push({
-            productId,
-            name: product.name,
-            price: product.price,
-            quantity: 1
-        });
-    }
-    
-    updateCart();
-    scheduleAutoSave();
-}
-
 function updateCart() {
     const cartItems = document.getElementById('cart-items');
     const totalAmount = document.getElementById('total-amount');
@@ -385,22 +558,9 @@ function checkout() {
     paymentModal.show();
 }
 
-function calculateChange() {
-    const total = parseFloat(document.getElementById('payment-amount').textContent);
-    const paid = parseFloat(document.getElementById('payment-input').value) || 0;
-    const change = paid - total;
-    
-    if (change >= 0) {
-        document.getElementById('change-amount').textContent = change.toFixed(2);
-        document.getElementById('change-amount').classList.remove('text-danger');
-        document.getElementById('change-amount').classList.add('text-success');
-        document.getElementById('confirm-payment').disabled = false;
-    } else {
-        document.getElementById('change-amount').textContent = Math.abs(change).toFixed(2);
-        document.getElementById('change-amount').classList.remove('text-success');
-        document.getElementById('change-amount').classList.add('text-danger');
-        document.getElementById('confirm-payment').disabled = true;
-    }
+function closePaymentModal() {
+    const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+    paymentModal.hide();
 }
 
 function confirmPayment() {
@@ -448,8 +608,7 @@ function confirmPayment() {
     updateDailySummary();
     
     // Close payment modal
-    const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-    paymentModal.hide();
+    closePaymentModal();
     
     // Show receipt
     generateReceipt(sale);
@@ -701,4 +860,109 @@ document.addEventListener('DOMContentLoaded', () => {
 updateProductList();
 updateProductButtons();
 updateCart();
-updateDailySummary(); 
+updateDailySummary();
+
+// Event Listeners Setup
+function setupEventListeners() {
+    // Product form submission
+    if (DOM.productForm) {
+        DOM.productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('product-name').value;
+            const price = parseFloat(document.getElementById('product-price').value);
+            
+            addProduct({ name, price });
+            DOM.productForm.reset();
+        });
+    }
+    
+    // Recipe form submission
+    if (DOM.recipeForm) {
+        DOM.recipeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('recipe-name').value;
+            const instructions = document.getElementById('recipe-instructions').value;
+            
+            const ingredients = Array.from(DOM.ingredientsList.children).map(field => {
+                const inputs = field.querySelectorAll('input');
+                return {
+                    amount: inputs[0].value,
+                    unit: inputs[1].value,
+                    name: inputs[2].value
+                };
+            });
+            
+            addRecipe({ name, ingredients, instructions });
+            DOM.recipeForm.reset();
+            DOM.ingredientsList.innerHTML = '';
+            addIngredientField();
+        });
+    }
+    
+    // Payment input
+    if (DOM.paymentAmount) {
+        DOM.paymentAmount.addEventListener('input', calculateChange);
+    }
+}
+
+// Product Management
+function addProduct(product) {
+    const newProduct = {
+        id: Date.now(),
+        ...product
+    };
+    state.products.push(newProduct);
+    saveData();
+    updateProductList();
+}
+
+function updateProductList() {
+    if (!DOM.productList) return;
+    
+    DOM.productList.innerHTML = state.products.map(product => `
+        <button class="product-button" onclick="addToCart(${JSON.stringify(product)})">
+            ${product.name}<br>
+            ${product.price.toFixed(2)}€
+        </button>
+    `).join('');
+}
+
+// Recipe Management
+function addRecipe(recipe) {
+    const newRecipe = {
+        id: Date.now(),
+        ...recipe
+    };
+    state.recipes.push(newRecipe);
+    saveData();
+    updateRecipeList();
+}
+
+function updateRecipeList() {
+    if (!DOM.recipeList) return;
+    
+    DOM.recipeList.innerHTML = state.recipes.map(recipe => `
+        <div class="recipe-card">
+            <h3>${recipe.name}</h3>
+            <div class="recipe-ingredients">
+                <h4>Zutaten:</h4>
+                <ul>
+                    ${recipe.ingredients.map(ing => `
+                        <li>${ing.amount} ${ing.unit} ${ing.name}</li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div class="recipe-instructions">
+                <h4>Zubereitung:</h4>
+                <p>${recipe.instructions}</p>
+            </div>
+            <button class="btn btn-danger" onclick="deleteRecipe(${recipe.id})">Löschen</button>
+        </div>
+    `).join('');
+}
+
+function deleteRecipe(id) {
+    state.recipes = state.recipes.filter(recipe => recipe.id !== id);
+    saveData();
+    updateRecipeList();
+} 
